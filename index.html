@@ -1,0 +1,129 @@
+<html>
+
+<body>
+    <canvas id="canvas" height="512px" width="512px" (click)="WindowClick()"></canvas>
+    <div class="entry">
+        <!--<li></li>-->
+        <!--<textarea rows="2" cols="20" id="main_textarea" class="c_ta_main">
+       input text here
+     </textarea>-->
+        <button id="prev" style="height: 25px; width: 100px" margin=5px>Prev</button>
+        <button id="next" style="height: 25px; width: 100px" margin=5px>Next</button>
+    </div>
+</body>
+
+<head>
+    <script type="text/javascript" src="http://cdn.bootcss.com/socket.io/1.7.3/socket.io.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript">
+        var socket = io();
+        //var socket = new io.Socket('localhost',{'port':8090});
+
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var image_text;
+
+        if (canvas.addEventListener) {
+            // IE9, Chrome, Safari, Opera
+            canvas.addEventListener("mousewheel", MouseWheelHandler, false);
+            // Firefox
+            canvas.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
+        }
+        function MouseWheelHandler(e) {
+
+            // cross-browser wheel delta
+            var e = window.event || e; // old IE support
+            var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+            console.log(delta);
+            if (delta < 0) {
+                socket.emit('next', '');
+            }
+            else {
+                socket.emit('prev', '');
+            }
+        }
+
+        socket.connect();
+
+        socket.on('connect', function () {
+            console.log('connected');
+            socket.send('hi!');
+        });
+
+        socket.on('message', function (data) {
+            console.log('message recived: ' + data);
+            image_text = data;
+        });
+
+        function drawImageText(data) {
+            // Draw the Watermark
+            ctx.font = '24px sans-serif';
+            //ctx.globalCompositeOperation = 'lighter';
+            ctx.fillStyle = "white";
+            //ctx.fillStyle = '#444';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            //ctx.fillText('From ' + data, canvas.width / 2, canvas.height / 2);
+            ctx.fillText('      ' + data, 30, 10);
+        }
+
+        function draw(data) {
+            var ctx = document.getElementById('canvas').getContext('2d');
+            var img = new Image();
+            img.onload = function () {
+                ctx.drawImage(img, 0, 0);
+                // ctx.beginPath();
+                // ctx.moveTo(30, 96);
+                // ctx.lineTo(70, 66);
+                // ctx.lineTo(103, 76);
+                // ctx.lineTo(170, 15);
+                // ctx.stroke();
+                drawImageText(image_text);
+            };
+            img.src = 'data:image/jpg;base64,' + data.buffer;
+        }
+
+        socket.on('image', function (data) {
+            console.log('image recived: ' + data.buffer.length);
+            //console.log('image data recived: ' + data.buffer);
+
+            if (data.image) {
+                draw(data);
+                // var img = new Image();
+                // img.src = 'data:image/jpg;base64,' + data.buffer;
+                // //img.src = 'data:image/png;base64,' + data.buffer;
+                // var canvas1 = document.getElementById('canvas');
+                // var ctx1 = canvas1.getContext('2d');
+                // ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+                // ctx1.drawImage(img, 0, 0);
+            }
+
+            // Draw content onto the canvas
+            //ctx.fillRect(0, 0, 100, 100);
+            // Create an ImageData object from it
+            //var imagedata = ctx.getImageData(0, 0, 100, 100);
+            // use the putImageData function that illustrates how putImageData works
+            //putImageData(ctx, imagedata, 150, 0, 50, 50, 25, 25);
+            //imagedata.data = data;
+            //putImageData(ctx, imagedata, 100, 100);
+
+            //ctx.putImageData(imagedata, 100, 100);
+        });
+
+        socket.on('disconnect', function () {
+            console.log('disconected');
+        });
+
+        $('#next').click(function () {
+            socket.emit('next', '');
+        });
+
+        $('#prev').click(function () {
+            socket.emit('prev', '');
+        });
+    </script>
+</head>
+
+
+
+</html>
