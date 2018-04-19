@@ -1,4 +1,5 @@
 // basic variables
+// qqzhoucn@gmail.com 20180419
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
